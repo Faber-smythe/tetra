@@ -170,13 +170,13 @@ export default function GameController({ debug }: GameControllerProps) {
       ?.getChildren()
       .filter((node) => node.name.includes("pile")) as BABYLON.Mesh[];
     if (piles.length != 16) return;
+    const pileShape = new BABYLON.PhysicsShapeCapsule(
+      new BABYLON.Vector3(0, -0.965, 0), // starting point of the capsule segment
+      new BABYLON.Vector3(0, 1, 0), // ending point of the capsule segment
+      0.05, // radius of the capsule
+      scene // scene of the shape
+    );
     piles.forEach((pileMesh, i) => {
-      const pileShape = new BABYLON.PhysicsShapeCapsule(
-        new BABYLON.Vector3(0, -0.965, 0), // starting point of the capsule segment
-        new BABYLON.Vector3(0, 1, 0), // ending point of the capsule segment
-        0.05, // radius of the capsule
-        scene // scene of the shape
-      );
       const transformNode = pileMesh as BABYLON.TransformNode;
       bindPhysicsBody(
         transformNode,
