@@ -9,13 +9,15 @@ import "@babylonjs/core/Debug/physicsViewer";
 import HavokPhysics from "@babylonjs/havok";
 import "@babylonjs/loaders";
 import { registerBuiltInLoaders } from "@babylonjs/loaders/dynamic";
-import { useState, useEffect, useRef } from "react";
+import { useEffect, useRef } from "react";
+import { useNavigate, useParams } from 'react-router-dom';
 import { GameControllerProps } from "../types/GameControllerTypes";
 import { isValidUrlGameData, bindPhysicsBody, encodeBase16 } from "../utils";
 import Pearl from "./Pearl";
 
 export default function GameController({ debug }: GameControllerProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
+  const navigate = useNavigate();
 
   let physicsDebugViewer: BABYLON.PhysicsViewer;
   let gameDataString = "";
@@ -23,6 +25,7 @@ export default function GameController({ debug }: GameControllerProps) {
   let glbImportPrommise: Promise<BABYLON.ISceneLoaderAsyncResult>;
   let envHelper: BABYLON.EnvironmentHelper;
   let skybox: BABYLON.Mesh;
+  let gameBoardMesh: BABYLON.Mesh;
   let pileMeshes: BABYLON.Mesh[];
   let havokInstance: any;
 
@@ -43,6 +46,7 @@ export default function GameController({ debug }: GameControllerProps) {
 
   const setUp = async () => {
     await babylonSetUp();
+    createGameFromUrl()
   };
 
   const babylonSetUp = async () => {
@@ -64,7 +68,8 @@ export default function GameController({ debug }: GameControllerProps) {
     if (!glbImportPrommise) {
       glbImportPrommise = BABYLON.SceneLoader.ImportMeshAsync(
         "",
-        "assets/Tetra.glb",
+        // "assets/Tetra.glb",
+        "assets/TetraLight.glb",
         undefined,
         scene
       );
@@ -112,6 +117,9 @@ export default function GameController({ debug }: GameControllerProps) {
     const resize = () => {
       scene.getEngine().resize();
     };
+    // This creates a light, aiming 0,1,0 - to the sky (non-mesh)
+    var light = new BABYLON.HemisphericLight("light", new BABYLON.Vector3(0, 1, 0), scene);
+    light.intensity = 2.5;
     // helper will generate
     if (!envHelper) {
       envHelper = new BABYLON.EnvironmentHelper({}, scene);
@@ -142,12 +150,13 @@ export default function GameController({ debug }: GameControllerProps) {
       scene.render();
     });
     console.log(scene);
+    console.log(pearlPiles);
   };
 
   const initGameBoard = () => {
     // add box collider to the ground of the gameboard
     const gameBoardNode = scene.getNodeByName("game-board");
-    const gameBoardMesh = scene.getMeshByName("game-board_primitive0");
+    if (!gameBoardMesh) gameBoardMesh = scene.getMeshByName("game-board_primitive0") as BABYLON.Mesh;
     if (!gameBoardMesh || !gameBoardNode) {
       console.error("no gameboard found");
       return;
@@ -164,6 +173,7 @@ export default function GameController({ debug }: GameControllerProps) {
       { mass: 0, restitution: 0.5 },
       scene
     );
+
 
     // add capsule colliders for each pile
     const piles = gameBoardNode
@@ -185,6 +195,7 @@ export default function GameController({ debug }: GameControllerProps) {
         scene
       );
     });
+
   };
 
   const initPiles = () => {
@@ -229,31 +240,50 @@ export default function GameController({ debug }: GameControllerProps) {
   const spawnPearlOnPile = (pile: BABYLON.Mesh) => {
     const pileIndex = pileMeshes.indexOf(pile);
     const color = Array.from(gameDataString).length % 2 == 0 ? "W" : "B";
-    console.log(pile.name);
-    console.log(pileIndex);
     console.log(pearlPiles);
     if (typeof pileIndex != "number") console.error("pileIndex NaN");
-    pearlPiles[pileIndex].push(
-      new Pearl(`pearl-${gameDataString.length}`, color, pile, scene)
-    );
+    const newPearl = new Pearl(`pearl-${gameDataString.length}`, color, pile, scene)
+    setTimeout(() => {
+      newPearl.mesh.physicsBody?.setMotionType(BABYLON.PhysicsMotionType.STATIC)
+      newPearl.mesh.position.y = .33 + ((pearlPiles[pileIndex].length - 1) * 0.38)
+    }, 1000)
+
+    const pileConstraint = new BABYLON.PrismaticConstraint(
+      new BABYLON.Vector3(0, 0, 0),
+      new BABYLON.Vector3(0, 0, 0),
+      new BABYLON.Vector3(0, 1, 0),
+      new BABYLON.Vector3(0, 1, 0),
+      scene
+    )
+    pile.physicsBody?.addConstraint(newPearl.mesh.physicsBody!, pileConstraint);
+
+    pearlPiles[pileIndex].push(newPearl);
     gameDataString += encodeBase16(pileIndex);
+    console.log(gameDataString)
     updateUrlGameData();
+
+    checkForWin()
   };
 
   const createGameFromUrl = () => {
     const queryParameters = new URLSearchParams(window.location.search);
     const urlGameData = queryParameters.get("gameData");
-    if (!urlGameData || isValidUrlGameData(urlGameData)) {
-      gameDataString = "";
+
+    if (urlGameData && !isValidUrlGameData(urlGameData)) {
+      window.alert("The gameData in the url is not valid /!\\")
+      navigate("")
     } else {
-      gameDataString = urlGameData;
+      gameDataString = urlGameData ?? "";
     }
   };
 
   const updateUrlGameData = () => {
-    const queryParameters = new URLSearchParams(window.location.search);
-    queryParameters.set("gameData", gameDataString);
+    navigate(`?gameData=${gameDataString}`)
   };
+
+  const checkForWin = () => {
+
+  }
 
   return (
     <canvas id="renderCanvas" ref={canvasRef}>

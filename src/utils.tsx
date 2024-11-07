@@ -8,7 +8,7 @@ export function isValidUrlGameData(gameData: string): Boolean {
   Array.from(gameData).forEach((character) => {
     if (isNaN(decodeBase16(character))) pass = false;
   });
-  return true;
+  return pass;
 }
 
 export function bindPhysicsBody(
@@ -20,7 +20,6 @@ export function bindPhysicsBody(
 ) {
   new BABYLON.PhysicsAggregate(transformNode, shape, aggregateOptions, scene);
 
-  // if (viewer) viewer.showBody(body);
 }
 
 const base16Values = [
