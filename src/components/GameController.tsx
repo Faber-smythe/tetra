@@ -36,6 +36,8 @@ export default function GameController({ debug }: GameControllerProps) {
 
   let pearlPiles: Pearl[][] = [];
   for (let i = 0; i < 16; i++) pearlPiles[i] = [];
+  let blackPearlMat: BABYLON.StandardMaterial
+  let whitePearlMat: BABYLON.StandardMaterial
 
   useEffect(() => {
     if (!canvasRef.current) return;
@@ -52,13 +54,14 @@ export default function GameController({ debug }: GameControllerProps) {
   const babylonSetUp = async () => {
     let havokPlugin;
     // initialize
-    if (!engine) engine = new BABYLON.Engine(canvasRef.current);
+    if (!engine) engine = new BABYLON.Engine(canvasRef.current, false, {
+      deterministicLockstep: true,
+    })
     if (!scene) {
       scene = new BABYLON.Scene(engine);
       havokInstance = await HavokPhysics();
       havokPlugin = new BABYLON.HavokPlugin(true, havokInstance);
       physicsDebugViewer = new PhysicsViewer();
-
       scene.enablePhysics(new BABYLON.Vector3(0, -9.81, 0), havokPlugin);
     }
 
@@ -86,6 +89,20 @@ export default function GameController({ debug }: GameControllerProps) {
       // if (!pearlColliderSpecimen) { console.error("no pearlSpecimen found"); return; }
       pearlColliderSpecimen.setEnabled(false);
 
+      if (!blackPearlMat) {
+        blackPearlMat = new BABYLON.StandardMaterial("black-pearls", scene)
+        blackPearlMat.diffuseColor = new BABYLON.Color3(.05, .05, .05)
+        blackPearlMat.roughness = 1
+        blackPearlMat.specularPower = 128
+      }
+      if (!whitePearlMat) {
+        whitePearlMat = new BABYLON.StandardMaterial("white-pearls", scene)
+        whitePearlMat.diffuseColor = new BABYLON.Color3(.95, .95, .95)
+        blackPearlMat.roughness = 1
+        blackPearlMat.specularPower = 128
+      }
+      console.log(whitePearlMat)
+      console.log(blackPearlMat)
       // add collider to the pearl
       const pearlshape = new BABYLON.PhysicsShapeMesh(
         pearlColliderSpecimen, // mesh from which to calculate the collisions
@@ -118,8 +135,10 @@ export default function GameController({ debug }: GameControllerProps) {
       scene.getEngine().resize();
     };
     // This creates a light, aiming 0,1,0 - to the sky (non-mesh)
-    var light = new BABYLON.HemisphericLight("light", new BABYLON.Vector3(0, 1, 0), scene);
-    light.intensity = 2.5;
+    if (!light) {
+      light = new BABYLON.HemisphericLight("light", new BABYLON.Vector3(0, 1, 0), scene);
+      light.intensity = 2.5;
+    }
     // helper will generate
     if (!envHelper) {
       envHelper = new BABYLON.EnvironmentHelper({}, scene);
@@ -243,12 +262,16 @@ export default function GameController({ debug }: GameControllerProps) {
     console.log(pearlPiles);
     if (typeof pileIndex != "number") console.error("pileIndex NaN");
     const newPearl = new Pearl(`pearl-${gameDataString.length}`, color, pile, scene)
+    if (newPearl.color == "B") newPearl.mesh.material = blackPearlMat
+    if (newPearl.color == "W") newPearl.mesh.material = whitePearlMat
+
+
+    /* setting constraints and repositionning after 1000ms to workaround pearl glitching */
     setTimeout(() => {
       newPearl.mesh.physicsBody?.setMotionType(BABYLON.PhysicsMotionType.STATIC)
       newPearl.mesh.position.y = .33 + ((pearlPiles[pileIndex].length - 1) * 0.38)
     }, 1000)
-
-    const pileConstraint = new BABYLON.PrismaticConstraint(
+    const pileConstraint = new BABYLON.SliderConstraint(
       new BABYLON.Vector3(0, 0, 0),
       new BABYLON.Vector3(0, 0, 0),
       new BABYLON.Vector3(0, 1, 0),

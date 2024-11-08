@@ -1,5 +1,6 @@
 import * as BABYLON from "@babylonjs/core";
 
+
 export default class Pearl {
   mesh!: BABYLON.Mesh;
   color: "B" | "W";
