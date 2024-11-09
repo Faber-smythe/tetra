@@ -57,7 +57,7 @@ export default function GameController({ debug }: GameControllerProps) {
   const babylonSetUp = async () => {
     let havokPlugin;
     // initialize
-    if (!engine) engine = new BABYLON.Engine(canvasRef.current, false, {
+    if (!engine) engine = new BABYLON.Engine(canvasRef.current, true, {
       deterministicLockstep: true,
     })
     if (!scene) {
@@ -261,6 +261,8 @@ export default function GameController({ debug }: GameControllerProps) {
           (ev) => {
             // check for left mouse button
             if (ev.sourceEvent.inputIndex === 2) {
+              console.log(victoryCheck.won)
+              console.log(sphereSpawning)
               if (sphereSpawning || victoryCheck.won) return
               sphereSpawning = true
 
@@ -278,9 +280,11 @@ export default function GameController({ debug }: GameControllerProps) {
                 gameDataString += encodeBase16(pile.pileIndex);
                 updateUrlGameData();
                 sphereSpawning = false
-                const hasPlayerWon = checkForWin()
-                if (hasPlayerWon) {
-                  window.alert(`${hasPlayerWon} has won the game !`)
+                victoryCheck = checkForWin()
+                if (victoryCheck.won) {
+                  console.log(victoryCheck)
+                  console.log(victoryCheck.won)
+                  window.alert(`${victoryCheck.won} has won the game !`)
                 }
               }, 1000)
 
@@ -298,12 +302,11 @@ export default function GameController({ debug }: GameControllerProps) {
     const urlGameData = queryParameters.get("gameData");
 
     if (urlGameData && !isValidUrlGameData(urlGameData)) {
-      window.alert("The gameData in the url is not valid /!\\")
-      navigate("")
+      navigate("", { replace: true })
     } else {
       gameDataString = urlGameData ?? "";
     }
-    loadPearlsFromGameData()
+    if (gameDataString) loadPearlsFromGameData()
   };
 
   const updateUrlGameData = () => {
