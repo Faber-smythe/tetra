@@ -55,3 +55,26 @@ export function decodeBase16(index: string): number {
   }
   return base16Values.indexOf(index.toUpperCase());
 }
+
+export const alignmentVectors: BABYLON.Vector3[] = [
+  // XY plane
+  new BABYLON.Vector3(-1, -1, 0),
+  new BABYLON.Vector3(-1, 0, 0),
+  new BABYLON.Vector3(-1, 1, 0),
+  // YZ plane
+  new BABYLON.Vector3(0, -1, -1),
+  new BABYLON.Vector3(0, -1, 0),
+  new BABYLON.Vector3(0, -1, 1),
+  // XZ plane
+  new BABYLON.Vector3(0, 0, -1),
+  new BABYLON.Vector3(-1, 0, -1),
+  new BABYLON.Vector3(-1, 0, 1),
+  // Crossplanes
+  new BABYLON.Vector3(-1, -1, -1),
+  new BABYLON.Vector3(-1, 1, -1),
+  new BABYLON.Vector3(-1, 1, 1),
+  new BABYLON.Vector3(-1, -1, 1)
+]
+
+export function vec2toVec3(flatVector: BABYLON.Vector2) { return new BABYLON.Vector3(flatVector.x, 0, flatVector.y) }
+export function vec3toVec2(vector: BABYLON.Vector3) { return new BABYLON.Vector2(vector.x, vector.z) }

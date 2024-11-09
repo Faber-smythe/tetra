@@ -10,10 +10,13 @@ import HavokPhysics from "@babylonjs/havok";
 import "@babylonjs/loaders";
 import { registerBuiltInLoaders } from "@babylonjs/loaders/dynamic";
 import { useEffect, useRef } from "react";
-import { useNavigate, useParams } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import { GameControllerProps } from "../types/GameControllerTypes";
-import { isValidUrlGameData, bindPhysicsBody, encodeBase16 } from "../utils";
+import { isValidUrlGameData, bindPhysicsBody, encodeBase16, decodeBase16, alignmentVectors, vec2toVec3, vec3toVec2 } from "../utils";
 import Pearl from "./Pearl";
+import Pile from "./Pile";
+import PilesByIndex from "../types/PilesByIndex";
+import VictoryCheck from "../types/VictoryCheck";
 
 export default function GameController({ debug }: GameControllerProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -28,16 +31,17 @@ export default function GameController({ debug }: GameControllerProps) {
   let gameBoardMesh: BABYLON.Mesh;
   let pileMeshes: BABYLON.Mesh[];
   let havokInstance: any;
+  let sphereSpawning = false;
 
   let engine: BABYLON.Engine;
   let scene: BABYLON.Scene;
   let camera: BABYLON.ArcRotateCamera;
   let light: BABYLON.Light;
 
-  let pearlPiles: Pearl[][] = [];
-  for (let i = 0; i < 16; i++) pearlPiles[i] = [];
+  let pearlPiles: Pile[] = [];
   let blackPearlMat: BABYLON.StandardMaterial
   let whitePearlMat: BABYLON.StandardMaterial
+  let victoryCheck: VictoryCheck = { won: null, alignedPearls: [] }
 
   useEffect(() => {
     if (!canvasRef.current) return;
@@ -48,7 +52,6 @@ export default function GameController({ debug }: GameControllerProps) {
 
   const setUp = async () => {
     await babylonSetUp();
-    createGameFromUrl()
   };
 
   const babylonSetUp = async () => {
@@ -101,22 +104,30 @@ export default function GameController({ debug }: GameControllerProps) {
         blackPearlMat.roughness = 1
         blackPearlMat.specularPower = 128
       }
-      console.log(whitePearlMat)
-      console.log(blackPearlMat)
-      // add collider to the pearl
-      const pearlshape = new BABYLON.PhysicsShapeMesh(
-        pearlColliderSpecimen, // mesh from which to calculate the collisions
-        scene // scene of the shape
-      );
-      bindPhysicsBody(
-        pearlSpecimen as BABYLON.TransformNode,
-        pearlshape,
-        { mass: 1, restitution: 0.5 },
-        scene
-      );
 
-      initGameBoard();
-      initPiles();
+      const waitForPhysicsEngine = () => {
+        if (havokInstance) {
+          // add collider to the pearl
+          const pearlshape = new BABYLON.PhysicsShapeMesh(
+            pearlColliderSpecimen, // mesh from which to calculate the collisions
+            scene // scene of the shape
+          );
+          bindPhysicsBody(
+            pearlSpecimen as BABYLON.TransformNode,
+            pearlshape,
+            { mass: 1, restitution: 0.5 },
+            scene
+          );
+
+          initGameBoard();
+          initPiles();
+          createGameFromUrl()
+        } else {
+          setTimeout(waitForPhysicsEngine, 200)
+        }
+      }
+      waitForPhysicsEngine()
+
     }
 
     // camera
@@ -168,8 +179,6 @@ export default function GameController({ debug }: GameControllerProps) {
     engine.runRenderLoop(() => {
       scene.render();
     });
-    console.log(scene);
-    console.log(pearlPiles);
   };
 
   const initGameBoard = () => {
@@ -222,7 +231,11 @@ export default function GameController({ debug }: GameControllerProps) {
       mesh.name.includes("pile")
     ) as BABYLON.Mesh[];
 
-    pileMeshes.forEach((pileMesh) => {
+    pileMeshes.forEach((pileMesh, i) => {
+      pileMesh.name = `pile-${i}`
+      const coordinates = new BABYLON.Vector2(i % 4, Math.floor(i / 4))
+      pearlPiles.push(new Pile(coordinates, pileMesh, i, scene))
+
       pileMesh.actionManager = new BABYLON.ActionManager(scene);
       pileMesh.actionManager.registerAction(
         new BABYLON.ExecuteCodeAction(
@@ -247,8 +260,31 @@ export default function GameController({ debug }: GameControllerProps) {
           BABYLON.ActionManager.OnPickUpTrigger,
           (ev) => {
             // check for left mouse button
-            if (ev.sourceEvent.inputIndex == 2) {
-              spawnPearlOnPile(pileMesh as BABYLON.Mesh);
+            if (ev.sourceEvent.inputIndex === 2) {
+              if (sphereSpawning || victoryCheck.won) return
+              sphereSpawning = true
+
+              // spawn a new pearl from the pile
+              const pile = pearlPiles.find(pile => pile.mesh.name === pileMesh.name)
+              if (!pile) { console.error("couldn't find pile for : ", pileMesh.name); return }
+
+              const color = Array.from(gameDataString).length % 2 === 0 ? "W" : "B";
+              pile.spawnPearl(`pearl-${gameDataString.length}`, color)
+
+              //
+              setTimeout(() => {
+                pile.pearlSleep()
+                // update gameData, url and check for winning move
+                gameDataString += encodeBase16(pile.pileIndex);
+                updateUrlGameData();
+                sphereSpawning = false
+                const hasPlayerWon = checkForWin()
+                if (hasPlayerWon) {
+                  window.alert(`${hasPlayerWon} has won the game !`)
+                }
+              }, 1000)
+
+
             }
           }
         )
@@ -256,37 +292,6 @@ export default function GameController({ debug }: GameControllerProps) {
     });
   };
 
-  const spawnPearlOnPile = (pile: BABYLON.Mesh) => {
-    const pileIndex = pileMeshes.indexOf(pile);
-    const color = Array.from(gameDataString).length % 2 == 0 ? "W" : "B";
-    console.log(pearlPiles);
-    if (typeof pileIndex != "number") console.error("pileIndex NaN");
-    const newPearl = new Pearl(`pearl-${gameDataString.length}`, color, pile, scene)
-    if (newPearl.color == "B") newPearl.mesh.material = blackPearlMat
-    if (newPearl.color == "W") newPearl.mesh.material = whitePearlMat
-
-
-    /* setting constraints and repositionning after 1000ms to workaround pearl glitching */
-    setTimeout(() => {
-      newPearl.mesh.physicsBody?.setMotionType(BABYLON.PhysicsMotionType.STATIC)
-      newPearl.mesh.position.y = .33 + ((pearlPiles[pileIndex].length - 1) * 0.38)
-    }, 1000)
-    const pileConstraint = new BABYLON.SliderConstraint(
-      new BABYLON.Vector3(0, 0, 0),
-      new BABYLON.Vector3(0, 0, 0),
-      new BABYLON.Vector3(0, 1, 0),
-      new BABYLON.Vector3(0, 1, 0),
-      scene
-    )
-    pile.physicsBody?.addConstraint(newPearl.mesh.physicsBody!, pileConstraint);
-
-    pearlPiles[pileIndex].push(newPearl);
-    gameDataString += encodeBase16(pileIndex);
-    console.log(gameDataString)
-    updateUrlGameData();
-
-    checkForWin()
-  };
 
   const createGameFromUrl = () => {
     const queryParameters = new URLSearchParams(window.location.search);
@@ -298,14 +303,87 @@ export default function GameController({ debug }: GameControllerProps) {
     } else {
       gameDataString = urlGameData ?? "";
     }
+    loadPearlsFromGameData()
   };
 
   const updateUrlGameData = () => {
     navigate(`?gameData=${gameDataString}`)
   };
 
-  const checkForWin = () => {
+  const loadPearlsFromGameData = () => {
+    const moves = Array.from(gameDataString)
+    const pilesByIndex: PilesByIndex = {}
 
+    sphereSpawning = true
+    pearlPiles.forEach(pile => {
+      pilesByIndex[encodeBase16(pile.pileIndex)] = pile
+    })
+
+    moves.forEach((moveBase16, i) => {
+      const pile = pilesByIndex[moveBase16]
+      setTimeout(() => {
+        const pearl = pile.spawnPearl(`pearl-${i}`, i % 2 == 0 ? "W" : "B", true)
+        setTimeout(() => {
+          pearl.mesh.physicsBody?.setMotionType(BABYLON.PhysicsMotionType.STATIC)
+          if (!victoryCheck.won) {
+            console.log("no win yet")
+            victoryCheck = checkForWin(pearl)
+          }
+          if (moves.length - 1 === i) {
+            sphereSpawning = false
+            if (victoryCheck.won) {
+              window.alert(`${victoryCheck.won} has won the game !`)
+              victoryCheck = victoryCheck
+            }
+          }
+        }, 800)
+      }, 150 * i)
+    })
+  }
+
+  const checkForWin = (currentPearl?: Pearl): VictoryCheck => {
+    const lastPileIndexPlayed = decodeBase16(gameDataString[gameDataString.length - 1])
+    const lastPilePlayed = pearlPiles[lastPileIndexPlayed]
+    if (!currentPearl) currentPearl = lastPilePlayed.pearls[lastPilePlayed.pearls.length - 1]
+    // check win on each axis
+    alignmentVectors.forEach((axis, i) => {
+      const alignedPearls = checkAligmentOnAxis(currentPearl!, axis)
+      if (alignedPearls.length == 4) {
+        victoryCheck.alignedPearls = alignedPearls
+        victoryCheck.alignedPearls.forEach(pearl => { pearl.mesh.showBoundingBox = true })
+        victoryCheck.won = alignedPearls[0].color === "B" ? "Black" : "White"
+      }
+    })
+    console.log(victoryCheck.alignedPearls)
+    console.log(currentPearl, victoryCheck)
+    return victoryCheck
+  }
+
+  const checkAligmentOnAxis = (currentPearl: Pearl, axis: BABYLON.Vector3): Pearl[] => {
+    if (!currentPearl) return []
+    const alignment: Pearl[] = [currentPearl]
+    // check in the axis direction
+    let nextPearl = getNextPearl(currentPearl, axis)
+    while (alignment.length < 4 && nextPearl !== null) {
+      alignment.push(nextPearl)
+      nextPearl = getNextPearl(nextPearl, axis)
+    }
+    // check in the axis opposite direction
+    let previousPearl = getNextPearl(currentPearl, axis.negate())
+    while (alignment.length < 4 && previousPearl != null) {
+      alignment.push(previousPearl)
+      previousPearl = getNextPearl(previousPearl, axis.negate())
+    }
+    return alignment
+  }
+
+  const getNextPearl = (currentPearl: Pearl, axis: BABYLON.Vector3): Pearl | null => {
+    const allPearls = pearlPiles.map(pile => pile.pearls).reduce((pileA, pileB) => pileA.concat(pileB))
+    const nextPearl = allPearls.find(pearl => (
+      pearl.coordinates.equals(currentPearl.coordinates.add(axis)) &&
+      pearl.color == currentPearl.color
+    ))
+    return nextPearl ?? null
   }
 
   return (

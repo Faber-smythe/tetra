@@ -1,3 +1,5 @@
+
+
 export interface GameControllerProps {
-  debug: boolean
+  debug?: boolean
 };
