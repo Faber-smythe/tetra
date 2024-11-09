@@ -119,9 +119,10 @@ export default function GameController({ debug }: GameControllerProps) {
             scene
           );
 
-          initGameBoard();
-          initPiles();
-          createGameFromUrl()
+          initGameBoard()
+          initPiles()
+          setTimeout(createGameFromUrl, (250));
+
         } else {
           setTimeout(waitForPhysicsEngine, 200)
         }
@@ -223,10 +224,10 @@ export default function GameController({ debug }: GameControllerProps) {
         scene
       );
     });
-
+    return
   };
 
-  const initPiles = () => {
+  const initPiles = async () => {
     pileMeshes = scene.meshes.filter((mesh) =>
       mesh.name.includes("pile")
     ) as BABYLON.Mesh[];
@@ -294,6 +295,7 @@ export default function GameController({ debug }: GameControllerProps) {
         )
       );
     });
+    return
   };
 
 
