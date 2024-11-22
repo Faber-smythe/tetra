@@ -1,7 +1,7 @@
 {
-  "name": "tetra",
+  "name": "Tetra",
   "version": "0.1.0",
-  "homepage": "/tetra/",
+  "homepage": ".",
   "private": true,
   "dependencies": {
     "@babylonjs/core": "^7.32.0",
