@@ -19,7 +19,6 @@ export function bindPhysicsBody(
   viewer?: BABYLON.PhysicsViewer
 ) {
   new BABYLON.PhysicsAggregate(transformNode, shape, aggregateOptions, scene);
-
 }
 
 const base16Values = [
@@ -73,8 +72,12 @@ export const alignmentVectors: BABYLON.Vector3[] = [
   new BABYLON.Vector3(-1, -1, -1),
   new BABYLON.Vector3(-1, 1, -1),
   new BABYLON.Vector3(-1, 1, 1),
-  new BABYLON.Vector3(-1, -1, 1)
-]
+  new BABYLON.Vector3(-1, -1, 1),
+];
 
-export function vec2toVec3(flatVector: BABYLON.Vector2) { return new BABYLON.Vector3(flatVector.x, 0, flatVector.y) }
-export function vec3toVec2(vector: BABYLON.Vector3) { return new BABYLON.Vector2(vector.x, vector.z) }
+export function vec2toVec3(flatVector: BABYLON.Vector2) {
+  return new BABYLON.Vector3(flatVector.x, 0, flatVector.y);
+}
+export function vec3toVec2(vector: BABYLON.Vector3) {
+  return new BABYLON.Vector2(vector.x, vector.z);
+}

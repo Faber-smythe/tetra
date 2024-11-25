@@ -9,7 +9,7 @@ import "@babylonjs/core/Debug/physicsViewer";
 import HavokPhysics from "@babylonjs/havok";
 import "@babylonjs/loaders";
 import { registerBuiltInLoaders } from "@babylonjs/loaders/dynamic";
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { GameControllerProps } from "../types/GameControllerTypes";
 import {
@@ -18,21 +18,23 @@ import {
   encodeBase16,
   decodeBase16,
   alignmentVectors,
-  vec2toVec3,
-  vec3toVec2,
 } from "../utils";
 import Pearl from "./Pearl";
 import Pile from "./Pile";
 import PilesByIndex from "../types/PilesByIndex";
 import VictoryCheck from "../types/VictoryCheck";
+import GUI from "./GUI";
 
 export default function GameController({ debug }: GameControllerProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const navigate = useNavigate();
 
   let physicsDebugViewer: BABYLON.PhysicsViewer;
-  let gameDataString = "";
-  let loading = true;
+  // let gameDataString = "";
+  const [gameDataString, setGameDataString] = useState("");
+  // const [currentTurnColor, setCurrentTurnColor] = useState("W");
+  let currentTurnColor: "W" | "B" = "W";
+
   let glbImportPrommise: Promise<BABYLON.ISceneLoaderAsyncResult>;
   let envHelper: BABYLON.EnvironmentHelper;
   let skybox: BABYLON.Mesh;
@@ -46,13 +48,12 @@ export default function GameController({ debug }: GameControllerProps) {
   let camera: BABYLON.ArcRotateCamera;
   let light: BABYLON.Light;
 
-  let pearlPiles: Pile[] = [];
+  const [pearlPiles, setPearlPiles] = useState([] as Pile[]);
   let blackPearlMat: BABYLON.StandardMaterial;
   let whitePearlMat: BABYLON.StandardMaterial;
   let victoryCheck: VictoryCheck = { won: null, alignedPearls: [] };
 
   useEffect(() => {
-    console.log("hey ! @");
     if (!canvasRef.current) return;
     setUp();
   }, [canvasRef]);
@@ -99,7 +100,6 @@ export default function GameController({ debug }: GameControllerProps) {
         "pearl-collider"
       ) as BABYLON.Mesh;
       pearlSpecimen.setEnabled(false);
-      // if (!pearlColliderSpecimen) { console.error("no pearlSpecimen found"); return; }
       pearlColliderSpecimen.setEnabled(false);
 
       if (!blackPearlMat) {
@@ -249,7 +249,11 @@ export default function GameController({ debug }: GameControllerProps) {
     pileMeshes.forEach((pileMesh, i) => {
       pileMesh.name = `pile-${i}`;
       const coordinates = new BABYLON.Vector2(i % 4, Math.floor(i / 4));
-      pearlPiles.push(new Pile(coordinates, pileMesh, i, scene));
+      setPearlPiles((prevPearlPiles) => {
+        prevPearlPiles.push(new Pile(coordinates, pileMesh, i, scene));
+        return prevPearlPiles;
+      });
+      // pearlPiles.push;
 
       pileMesh.actionManager = new BABYLON.ActionManager(scene);
       pileMesh.actionManager.registerAction(
@@ -277,7 +281,6 @@ export default function GameController({ debug }: GameControllerProps) {
             // check for left mouse button
             if (ev.sourceEvent.inputIndex === 2) {
               console.log(victoryCheck.won);
-              console.log(sphereSpawning);
               if (sphereSpawning || victoryCheck.won) return;
               sphereSpawning = true;
 
@@ -290,21 +293,26 @@ export default function GameController({ debug }: GameControllerProps) {
                 return;
               }
 
-              const color =
-                Array.from(gameDataString).length % 2 === 0 ? "W" : "B";
-              pile.spawnPearl(`pearl-${gameDataString.length}`, color);
+              pile.spawnPearl(
+                `pearl-${gameDataString.length}`,
+                currentTurnColor
+              );
 
-              //
               setTimeout(() => {
                 pile.pearlSleep();
                 // update gameData, url and check for winning move
-                gameDataString += encodeBase16(pile.pileIndex);
-                updateUrlGameData();
+                setGameDataString((prevGameDataString) => {
+                  const newGameData =
+                    prevGameDataString + encodeBase16(pile.pileIndex);
+                  currentTurnColor =
+                    Array.from(newGameData).length % 2 === 0 ? "W" : "B";
+                  navigate(`?gameData=${newGameData}`);
+                  return newGameData;
+                });
+
                 sphereSpawning = false;
                 victoryCheck = checkForWin();
                 if (victoryCheck.won) {
-                  console.log(victoryCheck);
-                  console.log(victoryCheck.won);
                   window.alert(`${victoryCheck.won} has won the game !`);
                 }
               }, 1000);
@@ -316,6 +324,15 @@ export default function GameController({ debug }: GameControllerProps) {
     return;
   };
 
+  // const currentTurnColor = () => {
+  //   console.log(gameDataString);
+  //   return
+  // };
+
+  // useEffect(() => {
+  //   currentTurnColor = Array.from(gameDataString).length % 2 === 0 ? "W" : "B";
+  // }, [gameDataString]);
+
   const createGameFromUrl = () => {
     const queryParameters = new URLSearchParams(window.location.search);
     const urlGameData = queryParameters.get("gameData");
@@ -323,17 +340,13 @@ export default function GameController({ debug }: GameControllerProps) {
     if (urlGameData && !isValidUrlGameData(urlGameData)) {
       navigate("", { replace: true });
     } else {
-      gameDataString = urlGameData ?? "";
+      setGameDataString(urlGameData ?? "");
+      if (urlGameData) loadPearlsFromGameData(urlGameData);
     }
-    if (gameDataString) loadPearlsFromGameData();
   };
 
-  const updateUrlGameData = () => {
-    navigate(`?gameData=${gameDataString}`);
-  };
-
-  const loadPearlsFromGameData = () => {
-    const moves = Array.from(gameDataString);
+  const loadPearlsFromGameData = (urlGameData: string) => {
+    const moves = Array.from(urlGameData);
     const pilesByIndex: PilesByIndex = {};
 
     sphereSpawning = true;
@@ -344,11 +357,8 @@ export default function GameController({ debug }: GameControllerProps) {
     moves.forEach((moveBase16, i) => {
       const pile = pilesByIndex[moveBase16];
       setTimeout(() => {
-        const pearl = pile.spawnPearl(
-          `pearl-${i}`,
-          i % 2 == 0 ? "W" : "B",
-          true
-        );
+        currentTurnColor = i % 2 == 0 ? "W" : "B";
+        const pearl = pile.spawnPearl(`pearl-${i}`, currentTurnColor, true);
         setTimeout(() => {
           pearl.mesh.physicsBody?.setMotionType(
             BABYLON.PhysicsMotionType.STATIC
@@ -359,6 +369,7 @@ export default function GameController({ debug }: GameControllerProps) {
           }
           if (moves.length - 1 === i) {
             sphereSpawning = false;
+            currentTurnColor = urlGameData.length % 2 == 0 ? "W" : "B";
             if (victoryCheck.won) {
               window.alert(`${victoryCheck.won} has won the game !`);
               victoryCheck = victoryCheck;
@@ -370,6 +381,7 @@ export default function GameController({ debug }: GameControllerProps) {
   };
 
   const checkForWin = (currentPearl?: Pearl): VictoryCheck => {
+    if (gameDataString.length < 4) return victoryCheck;
     const lastPileIndexPlayed = decodeBase16(
       gameDataString[gameDataString.length - 1]
     );
@@ -387,8 +399,7 @@ export default function GameController({ debug }: GameControllerProps) {
         victoryCheck.won = alignedPearls[0].color === "B" ? "Black" : "White";
       }
     });
-    console.log(victoryCheck.alignedPearls);
-    console.log(currentPearl, victoryCheck);
+
     return victoryCheck;
   };
 
@@ -428,9 +439,45 @@ export default function GameController({ debug }: GameControllerProps) {
     return nextPearl ?? null;
   };
 
+  const handleHistorySliding = (rewindIndex: number) => {
+    console.log(pearlPiles);
+
+    // enable all the pearls
+    pearlPiles.forEach((pile) => {
+      pile.rewind = 0;
+      pile.pearls.forEach((pearl) => {
+        pearl.mesh.setEnabled(true);
+      });
+    });
+    Array.from(gameDataString).forEach((pileIndex, i) => {
+      // disable pearls depending on history sliding
+      const pileToRewind = pearlPiles[decodeBase16(pileIndex)];
+      const lastPilePearl =
+        pileToRewind.pearls[
+          pileToRewind.pearls.length - 1 - pileToRewind.rewind
+        ];
+      console.log(pileToRewind);
+      console.log("pileToRewind.pearls.length - 1 - pileToRewind.rewind");
+      console.log(pileToRewind.pearls.length - 1 - pileToRewind.rewind);
+      console.log("pileToRewind.rewind");
+      console.log(pileToRewind.rewind);
+
+      if (i >= rewindIndex) {
+        if (lastPilePearl.mesh.isEnabled()) {
+          lastPilePearl.mesh.setEnabled(false);
+          pileToRewind.rewind += 1;
+        }
+      }
+    });
+  };
+
   return (
-    <canvas id="renderCanvas" ref={canvasRef}>
-      {" "}
-    </canvas>
+    <main>
+      <canvas id="renderCanvas" ref={canvasRef}></canvas>
+      <GUI
+        gameDataString={gameDataString}
+        handleHistorySliding={handleHistorySliding}
+      />
+    </main>
   );
 }
