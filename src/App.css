@@ -11,16 +11,67 @@
   width: 100%;
 }
 
+main{
+  display: flex;
+  align-items: center;
+}
+
 
 /**
 GUI 
 **/
-
-#bottom-GUI{
+#bottom-GUI, #top-GUI{ 
   position: fixed;
-  bottom: 30px;
   z-index: 10;
   margin: 0 auto;
-  height: 20px;
-  width: 400px;
+
+  height: 30px;
+}
+#bottom-GUI{
+  bottom: 30px;
+  width: 100%;
+  display: flex;
+}
+#top-GUI{
+  top: 30px;
+  width: 90%;
+  display: flex;
+  justify-content: space-between;
+}
+#top-GUI svg{  
+  font-size: 3rem;
+}
+
+:is(#top-GUI, #bottom-GUI) .UI-icon{
+  cursor: pointer;
+  transition: all .2s ease;
+}
+:is(#top-GUI, #bottom-GUI) .UI-icon:hover{
+  opacity: .65
+}
+.MuiSlider-mark{
+  background-color: white !important;
+  height: .5rem !important;
+  width: .5rem !important;
+  border-radius: 100% !important;
+}
+.MuiSlider-mark:nth-child(odd){
+  background-color: black !important;
+}
+.MuiSlider-mark:nth-child(3){
+  opacity: 0;
+  left: -.5rem
+}
+.UI-icon.historyArrow:first-of-type{
+  margin: 0px 15px;
+}
+
+
+
+/**
+* DEVMODE
+**/
+
+#scene-explorer-host, #inspector-host{
+  height: 100%
 }

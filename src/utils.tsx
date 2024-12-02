@@ -1,4 +1,5 @@
 import * as BABYLON from "@babylonjs/core";
+import { ThemeOptions } from '@mui/material/styles';
 
 export function isValidUrlGameData(gameData: string): Boolean {
   if (!gameData) return false;
@@ -81,3 +82,18 @@ export function vec2toVec3(flatVector: BABYLON.Vector2) {
 export function vec3toVec2(vector: BABYLON.Vector3) {
   return new BABYLON.Vector2(vector.x, vector.z);
 }
+
+export const themeOptions: ThemeOptions = {
+  palette: {
+    mode: 'dark',
+    primary: {
+      main: '#93c2ff',
+    },
+    secondary: {
+      main: '#dcf2ff',
+    },
+    info: {
+      main: '#3173c5',
+    },
+  },
+};

@@ -8,6 +8,7 @@ export default class Pile {
   scene!: BABYLON.Scene;
   pearls: Pearl[] = [];
   rewind: number = 0;
+  pickedDown: boolean = false
 
   constructor(
     coordinates: BABYLON.Vector2,
@@ -72,5 +73,13 @@ export default class Pile {
     if (!pearl) pearl = this.pearls[this.pearls.length - 1];
     pearl.mesh.physicsBody?.setMotionType(BABYLON.PhysicsMotionType.STATIC);
     pearl.mesh.position.y = 0.32 + (this.pearls.length - 1) * 0.383;
+  }
+
+  showGhostPearl() {
+
+  }
+
+  hideGhostPearl() {
+
   }
 }
