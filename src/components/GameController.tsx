@@ -18,6 +18,7 @@ import {
   encodeBase16,
   decodeBase16,
   alignmentVectors,
+  buildNodeMaterial
 } from "../utils";
 import Pearl from "./Pearl";
 import Pile from "./Pile";
@@ -91,6 +92,8 @@ export default function GameController({ devmode }: GameControllerProps) {
         if (pointerInfo.type == BABYLON.PointerEventTypes.POINTERDOWN && !clickingDown) clickingDown = scene
         if (pointerInfo.type == BABYLON.PointerEventTypes.POINTERUP) clickingDown = null
       })
+      buildNodeMaterial(scene, "W")
+      buildNodeMaterial(scene, "B")
     }
     if (!highlightLayer) {
       highlightLayer = new BABYLON.HighlightLayer("highlightLayer", scene, {});
@@ -102,8 +105,8 @@ export default function GameController({ devmode }: GameControllerProps) {
     if (!glbImportPrommise) {
       glbImportPrommise = BABYLON.SceneLoader.ImportMeshAsync(
         "",
-        // "assets/Tetra.glb",
-        "assets/TetraLight.glb",
+        "assets/Tetra.glb",
+        // "assets/TetraLight.glb",
         undefined,
         scene
       );
@@ -285,12 +288,15 @@ export default function GameController({ devmode }: GameControllerProps) {
       new BABYLON.ExecuteCodeAction(
         BABYLON.ActionManager.OnPointerOverTrigger,
         (ev) => {
+          // can't stack 5 pearls
+          if (pile.pearls.length >= 4) return
+          // do not preview during camera control
+          if (clickingDown && !(clickingDown instanceof Pile)) return
+          if (clickingDown instanceof Pile && clickingDown!.pileIndex !== pile.pileIndex) return
 
-          if (!clickingDown || (clickingDown instanceof Pile && clickingDown.pileIndex === pile.pileIndex)) {
-            highlightLayer.addMesh(pile.mesh, BABYLON.Color3.White());
-            pile.showGhostPearl()
-          }
-          // TODO glowLayer
+          highlightLayer.addMesh(pile.mesh, BABYLON.Color3.White());
+          pile.showGhostPearl(currentTurnColor)
+
         }
       )
     );
@@ -328,6 +334,8 @@ export default function GameController({ devmode }: GameControllerProps) {
 
             // flag for pearl spawn to avoid spamming
             sphereSpawning = true;
+
+            pile.hideGhostPearl()
 
             pile.spawnPearl(
               `pearl-${gameDataString.length}`,

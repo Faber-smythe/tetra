@@ -8,6 +8,7 @@ export default class Pile {
   scene!: BABYLON.Scene;
   pearls: Pearl[] = [];
   rewind: number = 0;
+  ghostPearl: Pearl | null = null
 
   constructor(
     coordinates: BABYLON.Vector2,
@@ -31,7 +32,7 @@ export default class Pile {
     if (fastSpawn) {
       const fastSpawnPosition = new BABYLON.Vector3(
         this.mesh.position.x,
-        0.7 + this.pearls.length * 0.38,
+        0.7 + this.pearls.length * 0.383,
         this.mesh.position.z
       );
       newPearl = new Pearl(
@@ -45,11 +46,6 @@ export default class Pile {
     } else {
       newPearl = new Pearl(name, color, this.mesh, coordinates, this.scene);
     }
-    const blackPearlMat = this.scene.getMaterialByName("black-pearls")!;
-    const whitePearlMat = this.scene.getMaterialByName("white-pearls")!;
-
-    if (newPearl.color == "B") newPearl.mesh.material = blackPearlMat;
-    if (newPearl.color == "W") newPearl.mesh.material = whitePearlMat;
 
     /* setting constraints and repositionning after 1000ms to workaround pearl glitching */
     const pileConstraint = new BABYLON.SliderConstraint(
@@ -74,11 +70,41 @@ export default class Pile {
     pearl.mesh.position.y = 0.32 + (this.pearls.length - 1) * 0.383;
   }
 
-  showGhostPearl() {
+  showGhostPearl(color: "W" | "B") {
+    const coordinates = new BABYLON.Vector3(
+      -1,
+      -1,
+      -1
+    );
+    const fastSpawnPosition = new BABYLON.Vector3(
+      this.mesh.position.x,
+      0.32 + this.pearls.length * 0.383,
+      this.mesh.position.z
+    );
+
+    if (!this.ghostPearl) {
+      this.ghostPearl = new Pearl(
+        `ghost-pearl-${this.pileIndex}`,
+        color,
+        this.mesh,
+        coordinates,
+        this.scene,
+        fastSpawnPosition,
+        true
+      )
+    }else{
+      this.ghostPearl.mesh.position = fastSpawnPosition
+      this.ghostPearl.applyColor(color)
+      this.ghostPearl.mesh.setEnabled(true)
+    }
+
+
 
   }
 
   hideGhostPearl() {
-
+    if (this.ghostPearl && this.ghostPearl.mesh.isEnabled()) {
+      this.ghostPearl.mesh.setEnabled(false)
+    }
   }
 }

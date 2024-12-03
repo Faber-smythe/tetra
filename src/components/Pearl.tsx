@@ -6,6 +6,7 @@ export default class Pearl {
   name!: string;
   color: "B" | "W";
   coordinates: BABYLON.Vector3;
+  scene: BABYLON.Scene;
 
   constructor(
     name: string,
@@ -13,11 +14,13 @@ export default class Pearl {
     pileMesh: BABYLON.Mesh,
     coordinates: BABYLON.Vector3,
     scene: BABYLON.Scene,
-    fastSpawnPosition?: BABYLON.Vector3
+    fastSpawnPosition?: BABYLON.Vector3,
+    isGhostPreview = false
   ) {
     this.color = color;
     this.name = name;
     this.coordinates = coordinates;
+    this.scene = scene;
     const pearlSpecimen = scene.getMeshByName("pearl-specimen") as BABYLON.Mesh;
     if (!pearlSpecimen) {
       console.error("no pearlSpecimen found");
@@ -25,7 +28,9 @@ export default class Pearl {
     }
     this.mesh = pearlSpecimen.clone(name);
     this.mesh.physicsBody!.disablePreStep = false;
-    let position
+
+    this.applyColor()
+
     if (fastSpawnPosition) {
       this.mesh.position = fastSpawnPosition
     } else {
@@ -35,6 +40,22 @@ export default class Pearl {
         pileMesh.position.z
       );
     }
+
+    // ghost pearl are used for preview and should not have physics
+    if (isGhostPreview) {
+      this.mesh.visibility = .4
+      this.mesh.physicsBody?.dispose()
+      this.mesh.isPickable = false
+    }
     this.mesh.setEnabled(true);
+  }
+
+  applyColor(color?: "W" | "B") {
+    if (!color) color = this.color
+
+    const blackPearlMat = this.scene.getMaterialByName("black-pearls")!;
+    const whitePearlMat = this.scene.getMaterialByName("white-pearls")!;
+    if (color == "B") this.mesh.material = blackPearlMat;
+    if (color == "W") this.mesh.material = whitePearlMat;
   }
 }
