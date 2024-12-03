@@ -13,7 +13,7 @@ function App() {
   return (
     <Router>
       <Routes>
-        <Route path="/" element={<GameController devmode />} />
+        <Route path="/" element={<GameController  />} />
       </Routes>
     </Router>
 

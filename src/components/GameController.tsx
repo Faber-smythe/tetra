@@ -49,6 +49,7 @@ export default function GameController({ devmode }: GameControllerProps) {
   let camera: BABYLON.ArcRotateCamera;
   let light: BABYLON.Light;
   let highlightLayer: BABYLON.HighlightLayer
+  let clickingDown: Pile | null | BABYLON.Scene = null
 
   const [pearlPiles, setPearlPiles] = useState([] as Pile[]);
   let blackPearlMat: BABYLON.StandardMaterial;
@@ -86,8 +87,15 @@ export default function GameController({ devmode }: GameControllerProps) {
       havokPlugin = new BABYLON.HavokPlugin(true, havokInstance);
       physicsDebugViewer = new PhysicsViewer();
       scene.enablePhysics(new BABYLON.Vector3(0, -9.81, 0), havokPlugin);
+      scene.onPointerObservable.add((pointerInfo) => {
+        if (pointerInfo.type == BABYLON.PointerEventTypes.POINTERDOWN && !clickingDown) clickingDown = scene
+        if (pointerInfo.type == BABYLON.PointerEventTypes.POINTERUP) clickingDown = null
+      })
     }
-    if (!highlightLayer) highlightLayer = new BABYLON.HighlightLayer("highlightLayer", scene);
+    if (!highlightLayer) {
+      highlightLayer = new BABYLON.HighlightLayer("highlightLayer", scene, {});
+      highlightLayer.outerGlow = false
+    }
     if (devmode) Inspector.Show(scene, {});
 
     // import assets
@@ -277,9 +285,11 @@ export default function GameController({ devmode }: GameControllerProps) {
       new BABYLON.ExecuteCodeAction(
         BABYLON.ActionManager.OnPointerOverTrigger,
         (ev) => {
-          // pile.mesh.showBoundingBox = true
-          highlightLayer.addMesh(pile.mesh, BABYLON.Color3.White());
-          pile.showGhostPearl()
+
+          if (!clickingDown || (clickingDown instanceof Pile && clickingDown.pileIndex === pile.pileIndex)) {
+            highlightLayer.addMesh(pile.mesh, BABYLON.Color3.White());
+            pile.showGhostPearl()
+          }
           // TODO glowLayer
         }
       )
@@ -303,8 +313,7 @@ export default function GameController({ devmode }: GameControllerProps) {
             if (sphereSpawning || victoryCheck.won) return;
             // check for pile height because game area is only a 4x4x4 cube
             if (pile.pearls.length === 4) return;
-            pile.pickedDown = true
-            setTimeout(() => { pile.pickedDown = false }, 500)
+            clickingDown = pile
           }
         })
     )
@@ -313,7 +322,9 @@ export default function GameController({ devmode }: GameControllerProps) {
         BABYLON.ActionManager.OnPickUpTrigger,
         (ev) => {
           // pearl only spawns on left click
-          if (ev.sourceEvent.inputIndex === 2 && pile.pickedDown) {
+          if (ev.sourceEvent.inputIndex === 2 &&
+            clickingDown instanceof Pile &&
+            clickingDown.pileIndex == pile.pileIndex) {
 
             // flag for pearl spawn to avoid spamming
             sphereSpawning = true;
@@ -343,6 +354,8 @@ export default function GameController({ devmode }: GameControllerProps) {
                 window.alert(`${victoryCheck.won} has won the game !`);
               }
             }, 1000);
+          } else {
+            console.log(clickingDown)
           }
         }
       )

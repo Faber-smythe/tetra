@@ -17,6 +17,7 @@ export default function GUI({
   //   let positionIndex = gameDataString.length;
   const [positionIndex, setPositionIndex] = useState(gameDataString.length);
   const [sliderWidth, setSliderWidth] = useState(60);
+  const [showHistory, setShowHistory] = useState(false);
 
   useEffect(() => {
     setPositionIndex(gameDataString.length);
@@ -25,6 +26,9 @@ export default function GUI({
     console.log(60 + gameDataString.length * 30)
     if (60 + gameDataString.length * 30 < window.innerWidth * .9) {
       setSliderWidth(60 + gameDataString.length * 30)
+    }
+    if (gameDataString.length >= 2) {
+      setShowHistory(true)
     }
   }, [gameDataString]);
 
@@ -63,7 +67,8 @@ export default function GUI({
           </span>
         </div>
       </div>
-      <div id="bottom-GUI" style={{ width: `${sliderWidth}px` }}>
+
+      <div id="bottom-GUI" style={{ width: `${sliderWidth}px`, display: showHistory ? "flex" : "none" }}>
         <span title="Coup précédent" style={{ visibility: (positionIndex > 0 ? "visible" : "hidden") }}>
           <ArrowBackIosNewIcon className="UI-icon" color="secondary" onClick={(e) => { handleSlide(positionIndex - 1) }} />
         </span>
@@ -81,6 +86,7 @@ export default function GUI({
           <ArrowForwardIosIcon className="UI-icon" color="secondary" onClick={(e) => { handleSlide(positionIndex + 1) }} />
         </span>
       </div>
+
     </ThemeProvider >
   );
 }

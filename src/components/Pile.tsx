@@ -8,7 +8,6 @@ export default class Pile {
   scene!: BABYLON.Scene;
   pearls: Pearl[] = [];
   rewind: number = 0;
-  pickedDown: boolean = false
 
   constructor(
     coordinates: BABYLON.Vector2,
