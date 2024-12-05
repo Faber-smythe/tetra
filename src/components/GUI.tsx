@@ -26,7 +26,7 @@ export default function GUI({
 
     // adapt slider width to game length
     console.log(60 + gameDataString.length * 30);
-    if (60 + gameDataString.length * 30 < window.innerWidth * 0.9) {
+    if (120 + gameDataString.length * 30 < window.innerWidth * 0.9) {
       setSliderWidth(60 + gameDataString.length * 30);
     }
     if (gameDataString.length >= 2) {

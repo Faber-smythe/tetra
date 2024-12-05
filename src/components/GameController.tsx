@@ -311,13 +311,19 @@ export default function GameController({
         (ev) => {
           // don't preview if context doesn't allow pearl spawning
           if (pile.pearls.length >= 4) return;
+          console.log("tick 0");
           if (clickingDown && !(clickingDown instanceof Pile)) return;
+          console.log("tick 1");
           if (
             clickingDown instanceof Pile &&
             clickingDown!.pileIndex !== pile.pileIndex
           )
             return;
+          console.log("tick 2");
           if (sphereSpawning) return;
+          console.log("tick 3");
+          console.log("victoryCheck");
+          console.log(victoryCheck);
           if (victoryCheck.won) return;
 
           highlightLayer.addMesh(pile.mesh, BABYLON.Color3.White());
@@ -399,6 +405,7 @@ export default function GameController({
   };
 
   const createGameFromUrl = () => {
+    console.log(victoryCheck);
     pearlPiles.forEach((pile) => {
       pile.pearls.forEach((pearl) => {
         pearl.mesh.dispose();
@@ -535,10 +542,16 @@ export default function GameController({
     });
   };
 
-  const restartGame = () => {
+  const restartGame = async () => {
     if (window.confirm("Cela effacera la partie en cours. Continuer ?")) {
-      navigate("/");
-      createGameFromUrl();
+      // victoryCheck.won = null;
+      // victoryCheck.alignedPearls = [];
+      // console.log(scene);
+      // scene.dispose();
+      // await babylonSetUp();
+      // navigate("/");
+      // createGameFromUrl();
+      window.open("/");
     }
   };
 
