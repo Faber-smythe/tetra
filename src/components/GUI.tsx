@@ -25,9 +25,8 @@ export default function GUI({
     setPositionIndex(gameDataString.length);
 
     // adapt slider width to game length
-    console.log(60 + gameDataString.length * 30);
-    if (120 + gameDataString.length * 30 < window.innerWidth * 0.9) {
-      setSliderWidth(60 + gameDataString.length * 30);
+    if (150 + gameDataString.length * 30 < window.innerWidth * 0.9) {
+      setSliderWidth(150 + gameDataString.length * 30);
     }
     if (gameDataString.length >= 2) {
       setShowHistory(true);
