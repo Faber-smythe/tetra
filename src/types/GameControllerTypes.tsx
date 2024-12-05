@@ -1,5 +1,4 @@
-
-
 export interface GameControllerProps {
-  devmode?: boolean
-};
+  devmode?: boolean;
+  lightVersion?: boolean;
+}

@@ -1,77 +1,79 @@
-
-
-#root{
-  position:fixed;
+#root {
+  position: fixed;
   height: 100vh;
   width: 100vw;
 }
 
-#renderCanvas, main{
+#renderCanvas,
+main {
   height: 100%;
   width: 100%;
 }
 
-main{
+main {
   display: flex;
   align-items: center;
 }
 
-
 /**
 GUI 
 **/
-#bottom-GUI, #top-GUI{ 
+#bottom-GUI,
+#top-GUI {
   position: fixed;
   z-index: 10;
   margin: 0 auto;
 
   height: 30px;
 }
-#bottom-GUI{
+#bottom-GUI {
   bottom: 30px;
   width: 100%;
   display: flex;
 }
-#top-GUI{
-  top: 30px;
-  width: 90%;
+#top-GUI {
+  width: 100%;
   display: flex;
   justify-content: space-between;
+  align-items: center;
+  background: #2f3541;
+  height: fit-content;
+  padding: 10px;
 }
-#top-GUI svg{  
-  font-size: 3rem;
+#top-GUI svg {
+  font-size: 4rem;
 }
 
-:is(#top-GUI, #bottom-GUI) .UI-icon{
+:is(#top-GUI, #bottom-GUI) .UI-icon {
   cursor: pointer;
-  transition: all .2s ease;
+  transition: all 0.2s ease;
+  margin: 0 25px;
 }
-:is(#top-GUI, #bottom-GUI) .UI-icon:hover{
-  opacity: .65
+:is(#top-GUI, #bottom-GUI) .UI-icon:hover {
+  opacity: 0.65;
 }
-.MuiSlider-mark{
+.MuiSlider-mark {
   background-color: white !important;
-  height: .5rem !important;
-  width: .5rem !important;
+  height: 0.5rem !important;
+  width: 0.5rem !important;
   border-radius: 100% !important;
 }
-.MuiSlider-mark:nth-child(odd){
+.MuiSlider-mark:nth-child(odd) {
   background-color: black !important;
 }
-.MuiSlider-mark:nth-child(3){
+.MuiSlider-mark:nth-child(3) {
   opacity: 0;
-  left: -.5rem
+  left: -0.5rem;
 }
-.UI-icon.historyArrow:first-of-type{
+.UI-icon.historyArrow:first-of-type {
   margin: 0px 15px;
 }
-
-
 
 /**
 * DEVMODE
 **/
 
-#scene-explorer-host, #inspector-host{
-  height: 100%
+#scene-explorer-host,
+#inspector-host {
+  height: 100%;
 }

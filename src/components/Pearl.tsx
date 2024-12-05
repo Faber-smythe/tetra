@@ -1,6 +1,5 @@
 import * as BABYLON from "@babylonjs/core";
 
-
 export default class Pearl {
   mesh!: BABYLON.Mesh;
   name!: string;
@@ -15,7 +14,7 @@ export default class Pearl {
     coordinates: BABYLON.Vector3,
     scene: BABYLON.Scene,
     fastSpawnPosition?: BABYLON.Vector3,
-    isGhostPreview = false
+    isGhostPearl = false
   ) {
     this.color = color;
     this.name = name;
@@ -29,10 +28,10 @@ export default class Pearl {
     this.mesh = pearlSpecimen.clone(name);
     this.mesh.physicsBody!.disablePreStep = false;
 
-    this.applyColor()
+    this.applyColor(isGhostPearl);
 
     if (fastSpawnPosition) {
-      this.mesh.position = fastSpawnPosition
+      this.mesh.position = fastSpawnPosition;
     } else {
       this.mesh.position = new BABYLON.Vector3(
         pileMesh.position.x,
@@ -42,20 +41,39 @@ export default class Pearl {
     }
 
     // ghost pearl are used for preview and should not have physics
-    if (isGhostPreview) {
-      this.mesh.visibility = .4
-      this.mesh.physicsBody?.dispose()
-      this.mesh.isPickable = false
+    if (isGhostPearl) {
+      this.mesh.visibility = 0.4;
+      this.mesh.physicsBody?.dispose();
+      this.mesh.isPickable = false;
     }
+    this.mesh.rotationQuaternion = null;
     this.mesh.setEnabled(true);
+    this.mesh.rotation.y *= 10;
+    console.log(this.mesh.rotation);
+
+    this.mesh.actionManager = new BABYLON.ActionManager(this.scene);
+    this.mesh.actionManager.registerAction(
+      new BABYLON.ExecuteCodeAction(
+        BABYLON.ActionManager.OnPickDownTrigger,
+        (ev) => {
+          // pearl only spawns on left click
+          if (ev.sourceEvent.inputIndex === 2) {
+            this.mesh.rotation.y += 30;
+            console.log(this.mesh);
+            console.log(this.mesh.rotation);
+          }
+        }
+      )
+    );
   }
 
-  applyColor(color?: "W" | "B") {
-    if (!color) color = this.color
+  applyColor(isGhostPearl = false, color?: "W" | "B") {
+    if (!color) color = this.color;
 
-    const blackPearlMat = this.scene.getMaterialByName("black-pearls")!;
-    const whitePearlMat = this.scene.getMaterialByName("white-pearls")!;
-    if (color == "B") this.mesh.material = blackPearlMat;
-    if (color == "W") this.mesh.material = whitePearlMat;
+    const pearlMaterial = this.scene.getMaterialByName(
+      `pearl-material-${color}${isGhostPearl ? "-ghost" : ""}`
+    )!;
+
+    this.mesh.material = pearlMaterial;
   }
 }

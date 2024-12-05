@@ -8,7 +8,7 @@ export default class Pile {
   scene!: BABYLON.Scene;
   pearls: Pearl[] = [];
   rewind: number = 0;
-  ghostPearl: Pearl | null = null
+  ghostPearl: Pearl | null = null;
 
   constructor(
     coordinates: BABYLON.Vector2,
@@ -71,11 +71,7 @@ export default class Pile {
   }
 
   showGhostPearl(color: "W" | "B") {
-    const coordinates = new BABYLON.Vector3(
-      -1,
-      -1,
-      -1
-    );
+    const coordinates = new BABYLON.Vector3(-1, -1, -1);
     const fastSpawnPosition = new BABYLON.Vector3(
       this.mesh.position.x,
       0.32 + this.pearls.length * 0.383,
@@ -91,20 +87,17 @@ export default class Pile {
         this.scene,
         fastSpawnPosition,
         true
-      )
-    }else{
-      this.ghostPearl.mesh.position = fastSpawnPosition
-      this.ghostPearl.applyColor(color)
-      this.ghostPearl.mesh.setEnabled(true)
+      );
+    } else {
+      this.ghostPearl.mesh.position = fastSpawnPosition;
+      this.ghostPearl.applyColor(true, color);
+      this.ghostPearl.mesh.setEnabled(true);
     }
-
-
-
   }
 
   hideGhostPearl() {
     if (this.ghostPearl && this.ghostPearl.mesh.isEnabled()) {
-      this.ghostPearl.mesh.setEnabled(false)
+      this.ghostPearl.mesh.setEnabled(false);
     }
   }
 }
