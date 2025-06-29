@@ -1,6 +1,5 @@
-import React from "react";
+
 import { useEffect } from "react";
-import logo from "./logo.svg";
 import "./reset.css";
 import "./App.css";
 import "@fontsource/roboto/300.css";
