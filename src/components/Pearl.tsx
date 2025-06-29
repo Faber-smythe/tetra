@@ -49,7 +49,6 @@ export default class Pearl {
     this.mesh.rotationQuaternion = null;
     this.mesh.setEnabled(true);
     this.mesh.rotation.y *= 10;
-    console.log(this.mesh.rotation);
 
     this.mesh.actionManager = new BABYLON.ActionManager(this.scene);
     this.mesh.actionManager.registerAction(
@@ -59,8 +58,6 @@ export default class Pearl {
           // pearl only spawns on left click
           if (ev.sourceEvent.inputIndex === 2) {
             this.mesh.rotation.y += 30;
-            console.log(this.mesh);
-            console.log(this.mesh.rotation);
           }
         }
       )
@@ -73,7 +70,6 @@ export default class Pearl {
     const pearlMaterial = this.scene.getMaterialByName(
       `pearl-material-${color}${isGhostPearl ? "-ghost" : ""}`
     )!;
-
     this.mesh.material = pearlMaterial;
   }
 }

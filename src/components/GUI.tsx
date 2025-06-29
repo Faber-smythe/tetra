@@ -15,6 +15,7 @@ export default function GUI({
   gameDataString,
   handleHistorySliding,
   handleRestartGame,
+  devmode
 }: GUIProps) {
   //   let positionIndex = gameDataString.length;
   const [positionIndex, setPositionIndex] = useState(gameDataString.length);
@@ -55,7 +56,7 @@ export default function GUI({
   const theme = createTheme(themeOptions);
   return (
     <ThemeProvider theme={theme}>
-      <div id="top-GUI">
+      <div id="top-GUI" style={{ top: `${devmode ? "0px" : "auto"}`, width: `${devmode ? '50%' : '100%'}` }}>
         <div>
           <span title="Recommencer la partie">
             <RestartAltIcon
@@ -136,6 +137,6 @@ export default function GUI({
           />
         </span>
       </div>
-    </ThemeProvider>
+    </ThemeProvider >
   );
 }
