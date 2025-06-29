@@ -1,46 +1,61 @@
-# Getting Started with Create React App
+# 🎮 Tetra
 
-This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).
+**Tetra** is a 3D turn-based game inspired by a physical board game, where two players take turns dropping pearls on one of 16 vertical sticks. The goal: be the first to align four pearls of your color.
 
-## Available Scripts
+Built with **React** and **Babylon.js**, Tetra brings tactile game mechanics to the browser — complete with zooming, rotating the camera, and move-by-move game review.
 
-In the project directory, you can run:
+---
 
-### `npm start`
+## 🛠️ Setup Instructions
 
-Runs the app in the development mode.\
-Open [http://localhost:3000](http://localhost:3000) to view it in the browser.
+Clone the repo and run it locally:
 
-The page will reload if you make edits.\
-You will also see any lint errors in the console.
+```bash
+git clone https://github.com/your-username/tetra.git
+cd tetra
+npm install
+npm start
+```
 
-### `npm test`
+---
 
-Launches the test runner in the interactive watch mode.\
-See the section about [running tests](https://facebook.github.io/create-react-app/docs/running-tests) for more information.
+## ✨ Features
 
-### `npm run build`
+- 🧠 Turn-based gameplay: Black vs. White, pearl-drop mechanics through Havok Physic Engine.
+- 🎥 Interactive 3D board: zoom, rotate, inspect the play area
+- 📜 Timeline slider: review each turn of the game
+- 🔗 URL-based game state: play asynchronously by sharing links
+- 🎮 "Hot seat" local mode: both players take turns on the same screen
 
-Builds the app for production to the `build` folder.\
-It correctly bundles React in production mode and optimizes the build for the best performance.
+---
 
-The build is minified and the filenames include the hashes.\
-Your app is ready to be deployed!
+## 🚀 Live Demo
 
-See the section about [deployment](https://facebook.github.io/create-react-app/docs/deployment) for more information.
+[👉 View the Game](#)  
+_(Live version coming soon!)_
 
-### `npm run eject`
+---
 
-**Note: this is a one-way operation. Once you `eject`, you can’t go back!**
+## ⚙️ Tech Stack
 
-If you aren’t satisfied with the build tool and configuration choices, you can `eject` at any time. This command will remove the single build dependency from your project.
+- **Frontend**: [React (function components, hooks)](https://fr.react.dev/)
+- **3D Engine**: [Babylon.js](https://www.babylonjs.com/)
+- **Assets**: Custom-designed using Blender (3D) and Photoshop (textures)
 
-Instead, it will copy all the configuration files and the transitive dependencies (webpack, Babel, ESLint, etc) right into your project so you have full control over them. All of the commands except `eject` will still work, but they will point to the copied scripts so you can tweak them. At this point you’re on your own.
+---
 
-You don’t have to ever use `eject`. The curated feature set is suitable for small and middle deployments, and you shouldn’t feel obligated to use this feature. However we understand that this tool wouldn’t be useful if you couldn’t customize it when you are ready for it.
+## Purpose
 
-## Learn More
+- **Showcasing** 3D and interactive UI capabilities in a React-based portfolio project
+- **Personal enjoyment** and remote play with a long-distance friend
 
-You can learn more in the [Create React App documentation](https://facebook.github.io/create-react-app/docs/getting-started).
+---
 
-To learn React, check out the [React documentation](https://reactjs.org/).
+## Lessons & Development Notes
+
+This project marked my transition to the modern **React hooks** API, migrating from class-based to function components. Managing game state — especially in 3D — taught me some insights on `useState` and `useRef`, particularly in syncing UI with visual interactions.
+
+### **Future plans**
+- ✅ **WebSocket** back-end for live remote play
+- ✅ **Game IDs** and persistent sessions
+- ✅ **Improved UI** and mobile-friendly controls
