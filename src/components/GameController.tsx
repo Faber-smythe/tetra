@@ -1,7 +1,7 @@
 "use client"; // This is a client component
 
 import * as BABYLON from "@babylonjs/core";
-import { PhysicsViewer } from "@babylonjs/core/Debug/physicsViewer";
+// import { PhysicsViewer } from "@babylonjs/core/Debug/physicsViewer";
 import { Inspector } from "@babylonjs/inspector";
 import "@babylonjs/core/Debug/physicsViewer";
 
@@ -66,25 +66,7 @@ export default function GameController({
   let whitePearlMat: BABYLON.StandardMaterial;
   let victoryCheck: VictoryCheck = { won: null, alignedPearls: [] };
 
-  useEffect(() => {
-    if (!canvasRef.current) return;
-
-    const setUp = async () => {
-      await babylonSetUp();
-    };
-    setUp();
-
-  }, [canvasRef]);
-
-  useEffect(() => {
-    // load game when pearl piles are ready
-    if (pearlPiles.length === 16) {
-      createGameFromUrl()
-    }
-  }, [pearlPiles]);
-
   registerBuiltInLoaders();
-
 
   const babylonSetUp = async () => {
     let havokPlugin;
@@ -161,12 +143,12 @@ export default function GameController({
         blackPearlMat.diffuseColor = new BABYLON.Color3(0.05, 0.05, 0.05);
         blackPearlMat.roughness = 1;
         blackPearlMat.specularPower = 128;
-        const blackMatGhost = blackPearlMat.clone("pearl-material-B-ghost");
+        blackPearlMat.clone("pearl-material-B-ghost");
       }
       if (!whitePearlMat) {
         whitePearlMat = new BABYLON.StandardMaterial("pearl-material-W", scene);
         whitePearlMat.diffuseColor = new BABYLON.Color3(0.95, 0.95, 0.95);
-        const whiteMatGhost = whitePearlMat.clone("pearl-material-W-ghost");
+        whitePearlMat.clone("pearl-material-W-ghost");
         // blackPearlMat.roughness = 1;
         // blackPearlMat.specularPower = 128;
       }
@@ -278,7 +260,7 @@ export default function GameController({
     const piles = gameBoardNode
       ?.getChildren()
       .filter((node) => node.name.includes("pile")) as BABYLON.Mesh[];
-    if (piles.length != 16) return;
+    if (piles.length !== 16) return;
     const pileShape = new BABYLON.PhysicsShapeCapsule(
       new BABYLON.Vector3(0, -0.965, 0), // starting point of the capsule segment
       new BABYLON.Vector3(0, 1, 0), // ending point of the capsule segment
@@ -408,6 +390,7 @@ export default function GameController({
       )
     );
   };
+
 
   const createGameFromUrl = () => {
     pearlPiles.forEach((pile) => {
@@ -564,6 +547,23 @@ export default function GameController({
       // window.open("/");
     }
   };
+  
+  useEffect(() => {
+    // load game when pearl piles are ready
+    if (pearlPiles.length === 16) {
+      createGameFromUrl()
+    }
+  }, [pearlPiles]);
+
+  useEffect(() => {
+    if (!canvasRef.current) return;
+
+    const setUp = async () => {
+      await babylonSetUp();
+    };
+    setUp();
+
+  }, [canvasRef, babylonSetUp]);
 
   return (
     <main style={{ flexDirection: devmode ? "row" : "column" }}>
