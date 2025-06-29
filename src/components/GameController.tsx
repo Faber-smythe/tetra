@@ -56,7 +56,8 @@ export default function GameController({
   let scene: BABYLON.Scene;
   let camera: BABYLON.ArcRotateCamera;
   let light: BABYLON.Light;
-  let highlightLayer: BABYLON.HighlightLayer;
+  const highlightLayer = useRef<BABYLON.HighlightLayer | null>(null)
+  // let highlightLayer: BABYLON.HighlightLayer;
   let glowLayer: BABYLON.GlowLayer;
   let clickingDown: Pile | null | BABYLON.Scene = null;
 
@@ -107,9 +108,9 @@ export default function GameController({
       }
       setGameScene(scene)
     }
-    if (!highlightLayer) {
-      highlightLayer = new BABYLON.HighlightLayer("highlightLayer", scene, {});
-      highlightLayer.outerGlow = false;
+    if (!highlightLayer.current) {
+      highlightLayer.current = new BABYLON.HighlightLayer("highlightLayer", scene, {});
+      highlightLayer.current.outerGlow = false;
     }
     if (!glowLayer) {
       glowLayer = new BABYLON.GlowLayer("glowLayer", scene, {});
@@ -312,8 +313,9 @@ export default function GameController({
             clickingDown!.pileIndex !== pile.pileIndex
           )
             return;
+          if (!highlightLayer.current) return
 
-          highlightLayer.addMesh(pile.mesh, BABYLON.Color3.White());
+          highlightLayer.current.addMesh(pile.mesh, BABYLON.Color3.White());
           pile.showGhostPearl(currentTurnColorRef.current);
         }
       )
@@ -322,7 +324,8 @@ export default function GameController({
       new BABYLON.ExecuteCodeAction(
         BABYLON.ActionManager.OnPointerOutTrigger,
         (ev) => {
-          highlightLayer.removeMesh(pile.mesh);
+          if (!highlightLayer.current) return
+          highlightLayer.current.removeMesh(pile.mesh);
           pile.hideGhostPearl();
         }
       )
@@ -450,6 +453,10 @@ export default function GameController({
 
   const checkForWin = (currentPearl: Pearl): VictoryCheck => {
     // check win on each axis
+    if (!highlightLayer.current) {
+      setTimeout(() => { checkForWin(currentPearl) }, 200)
+      return victoryCheck
+    }
     alignmentVectors.forEach((axis, i) => {
       const alignedPearls = checkAligmentOnAxis(currentPearl!, axis);
       if (alignedPearls.length === 4) {
@@ -457,7 +464,7 @@ export default function GameController({
         victoryCheck.alignedPearls.forEach((pearl) => {
           // glowLayer.referenceMeshToUseItsOwnMaterial(pearl.mesh);
           // highlightLayer.outerGlow = true
-          highlightLayer.addMesh(pearl.mesh, new BABYLON.Color3(0, 1, 0));
+          highlightLayer.current!.addMesh(pearl.mesh, new BABYLON.Color3(0, 1, 0));
         });
         victoryCheck.won = alignedPearls[0].color === "B" ? "Black" : "White";
       }
@@ -547,12 +554,13 @@ export default function GameController({
       // window.open("/");
     }
   };
-  
+
   useEffect(() => {
     // load game when pearl piles are ready
     if (pearlPiles.length === 16) {
       createGameFromUrl()
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [pearlPiles]);
 
   useEffect(() => {
@@ -562,8 +570,8 @@ export default function GameController({
       await babylonSetUp();
     };
     setUp();
-
-  }, [canvasRef, babylonSetUp]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [canvasRef]);
 
   return (
     <main style={{ flexDirection: devmode ? "row" : "column" }}>
