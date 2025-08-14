@@ -8,7 +8,7 @@ import "@babylonjs/core/Debug/physicsViewer";
 import HavokPhysics from "@babylonjs/havok";
 import "@babylonjs/loaders";
 import { registerBuiltInLoaders } from "@babylonjs/loaders/dynamic";
-import { useEffect, useRef, useState, useCallback } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { GameControllerProps } from "../types/GameControllerTypes";
 import {
@@ -30,7 +30,7 @@ export default function GameController({
   devmode,
   lightVersion,
 }: GameControllerProps) {
-  const canvasRef = useRef<HTMLCanvasElement | null>(null);
+  const canvasRef = useRef<HTMLCanvasElement>(null);
   const navigate = useNavigate();
 
   // let physicsDebugViewer: BABYLON.PhysicsViewer;
@@ -69,11 +69,7 @@ export default function GameController({
 
   registerBuiltInLoaders();
 
-  const babylonSetUp = useCallback(async () => {
-    if (!canvasRef.current) return;
-
-    // const babylonSetUp = async () => {
-
+  const babylonSetUp = async () => {
     let havokPlugin;
     // initialize
     if (!engine)
@@ -239,7 +235,7 @@ export default function GameController({
     engine.runRenderLoop(() => {
       scene.render();
     });
-  }, [lightVersion, devmode]);
+  };
 
   const initGameBoard = () => {
     // add box collider to the ground of the gameboard
@@ -408,25 +404,7 @@ export default function GameController({
     );
   };
 
-  // const createGameFromUrl = () => {
-  //   pearlPiles.forEach((pile) => {
-  //     pile.pearls.forEach((pearl) => {
-  //       pearl.mesh.dispose();
-  //     });
-  //     pile.pearls = [];
-  //   });
-
-  //   const queryParameters = new URLSearchParams(window.location.search);
-  //   const urlGameData = queryParameters.get("gameData");
-
-  //   if (urlGameData && !isValidUrlGameData(urlGameData)) {
-  //     navigate("", { replace: true });
-  //   } else {
-  //     setGameDataString(urlGameData ?? "");
-  //     if (urlGameData) loadPearlsFromGameData(urlGameData);
-  //   }
-  // };
-  const createGameFromUrl = useCallback(() => {
+  const createGameFromUrl = () => {
     pearlPiles.forEach((pile) => {
       pile.pearls.forEach((pearl) => {
         pearl.mesh.dispose();
@@ -443,7 +421,7 @@ export default function GameController({
       setGameDataString(urlGameData ?? "");
       if (urlGameData) loadPearlsFromGameData(urlGameData);
     }
-  }, [pearlPiles, navigate]);
+  };
 
   const loadPearlsFromGameData = (urlGameData: string) => {
     if (pearlPiles.length === 0) return;
@@ -601,19 +579,13 @@ export default function GameController({
 
   // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => {
-    // Prevent SSR crash: only run in browser
-    if (typeof window !== "undefined") {
-      babylonSetUp();
-    }
-  }, [babylonSetUp]);
-  // useEffect(() => {
-  //   if (!canvasRef.current) return;
+    if (!canvasRef.current) return;
 
-  //   const setUp = async () => {
-  //     await babylonSetUp();
-  //   };
-  //   setUp();
-  // }, [canvasRef, babylonSetUp]);
+    const setUp = async () => {
+      await babylonSetUp();
+    };
+    setUp();
+  }, [canvasRef, babylonSetUp]);
 
   return (
     <main style={{ flexDirection: devmode ? "row" : "column" }}>
