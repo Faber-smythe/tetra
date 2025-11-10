@@ -17,8 +17,8 @@ function App() {
   return (
     <Router>
       <Routes>
-        <Route path="/" element={<GameController />} />
-        {/* <Route path="/" element={<GameController lightVersion/>} /> */}
+        {/* <Route path="/" element={<GameController />} /> */}
+        <Route path="/" element={<GameController lightVersion/>} />
         {/* <Route path="/" element={<GameController devmode lightVersion/>} /> */}
       </Routes>
     </Router>
